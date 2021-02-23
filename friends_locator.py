@@ -72,7 +72,7 @@ def get_locations_by_id(user_id: str) -> list:
     resp = requests.get(url, headers=headers, params=params)
 
     locations = [(user['location'], user['username'])
-                 for user in resp.json()['data']
+                 for user in resp.json().get('data', [])
                  if 'location' in user]
 
     return locations
@@ -122,4 +122,4 @@ def create_html_map(coordinates: list) -> folium.Map:
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
