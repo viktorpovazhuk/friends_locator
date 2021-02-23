@@ -1,27 +1,25 @@
 from pprint import pprint
 import folium as folium
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-import uvicorn
+from flask import Flask, render_template, request
 import requests
 
-app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+app = Flask(__name__)
 twitter_bearer_token = 'AAAAAAAAAAAAAAAAAAAAAG7KMwEAAAAA54JdYkWN17qlqjSHWfSGzR' \
                        'wxzaY%3DDZte5Xdq1mXJkHOsAWyXSBcMiDssP5q8hUZvve7evDXHOIDmFa'
 google_key = "AIzaSyCjEEmgflTyKDb8Czyh12P4fICziH_67bY"
 
 
-@app.get("/", response_class=HTMLResponse)
-def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+@app.route("/")
+def read_root():
+    return render_template("index.html")
 
 
-@app.get("/friends_map", response_class=HTMLResponse)
-def read_item(request: Request, username: str):
+@app.route("/friends_map")
+def read_item():
+    username = request.args.get('username')
+    print(username)
     generate_map(username)
-    return templates.TemplateResponse("friends_map.html", {"request": request})
+    return render_template("friends_map.html")
 
 
 def generate_map(username: str):
@@ -100,4 +98,4 @@ def create_html_map(coordinates: list):
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    app.run()
