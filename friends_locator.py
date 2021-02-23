@@ -1,4 +1,6 @@
 from pprint import pprint
+from typing import Union
+import json
 import folium as folium
 from flask import Flask, render_template, request
 import requests
@@ -24,16 +26,26 @@ def read_item():
     """
     username = request.args.get('username')
 
+    if username == "":
+        return "Error! Enter username!"
+
     mp = generate_map(username)
+
+    if mp == "error":
+        return "Some error occurred! Maybe, you have entered incorrect username!"
 
     return mp._repr_html_()
 
 
-def generate_map(username: str) -> folium.Map:
+def generate_map(username: str) -> Union[str, folium.Map]:
     """
     Return map object with locations of friends of specified user
     """
     user_id = username_to_id(username)
+
+    if user_id == -1:
+        return "error"
+
     locations = get_locations_by_id(user_id)
     coords = locations_to_coords(locations)
     mp = create_html_map(coords)
@@ -55,8 +67,12 @@ def username_to_id(username: str) -> str:
     }
 
     resp = requests.get(url, headers=headers, params=params)
+    content = json.loads(resp.content.decode('utf-8'))
 
-    return resp.json()['data'][0]['id']
+    if 'errors' in content:
+        return -1
+
+    return content['data'][0]['id']
 
 
 def get_locations_by_id(user_id: str) -> list:
