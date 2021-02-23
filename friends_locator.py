@@ -11,25 +11,43 @@ google_key = "AIzaSyCjEEmgflTyKDb8Czyh12P4fICziH_67bY"
 
 @app.route("/")
 def read_root():
+    """
+    Return content of root html file
+    """
     return render_template("index.html")
 
 
 @app.route("/friends_map")
 def read_item():
+    """
+    Return content of html map with user's friends on it
+    """
     username = request.args.get('username')
-    print(username)
-    generate_map(username)
-    return render_template("friends_map.html")
+
+    mp = generate_map(username)
+
+    return mp._repr_html_()
 
 
-def generate_map(username: str):
-    id = username_to_id(username)
-    locations = get_locations_by_id(id)
+def generate_map(username: str) -> folium.Map:
+    """
+    Return map object with locations of friends of specified user
+    """
+    user_id = username_to_id(username)
+    locations = get_locations_by_id(user_id)
     coords = locations_to_coords(locations)
-    create_html_map(coords)
+    mp = create_html_map(coords)
+
+    return mp
 
 
-def username_to_id(username: str) -> int:
+def username_to_id(username: str) -> str:
+    """
+    Convert user's username to id
+
+    >>> username_to_id("Valsorya2Go")
+    '1362368428011569156'
+    """
     url = "https://api.twitter.com/2/users/by"
     headers = {'Authorization': 'Bearer ' + twitter_bearer_token}
     params = {
@@ -41,8 +59,11 @@ def username_to_id(username: str) -> int:
     return resp.json()['data'][0]['id']
 
 
-def get_locations_by_id(id: int) -> list:
-    url = f"https://api.twitter.com/2/users/{id}/following"
+def get_locations_by_id(user_id: str) -> list:
+    """
+    Return list of addresses of user's friends
+    """
+    url = f"https://api.twitter.com/2/users/{user_id}/following"
     headers = {'Authorization': 'Bearer ' + twitter_bearer_token}
     params = {
         'user.fields': 'location,username',
@@ -58,13 +79,13 @@ def get_locations_by_id(id: int) -> list:
 
 
 def locations_to_coords(locations: list) -> list:
+    """
+    Return coordinates for the list of addresses
+    """
     url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
     params = {"input": "UCU", "inputtype": "textquery",
               "fields": "formatted_address,geometry",
               "key": google_key}
-
-    # limit locations for the test
-    # locations = locations[:5]
 
     coords = []
     for loc in locations:
@@ -83,7 +104,10 @@ def locations_to_coords(locations: list) -> list:
     return coords
 
 
-def create_html_map(coordinates: list):
+def create_html_map(coordinates: list) -> folium.Map:
+    """
+    Create map object with markers in coordinates
+    """
     mp = folium.Map()
 
     fg = folium.FeatureGroup(name="Friends locations")
@@ -94,7 +118,7 @@ def create_html_map(coordinates: list):
 
     mp.add_child(folium.LayerControl())
 
-    mp.save('templates/friends_map.html')
+    return mp
 
 
 if __name__ == '__main__':
