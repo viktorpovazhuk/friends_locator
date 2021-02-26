@@ -6,35 +6,31 @@ from flask import Flask, render_template, request
 import requests
 
 app = Flask(__name__)
-twitter_bearer_token = 'AAAAAAAAAAAAAAAAAAAAAG7KMwEAAAAA54JdYkWN17qlqjSHWfSGzR' \
-                       'wxzaY%3DDZte5Xdq1mXJkHOsAWyXSBcMiDssP5q8hUZvve7evDXHOIDmFa'
+twitter_bearer_token = "AAAAAAAAAAAAAAAAAAAAAG7KMwEAAAAA54JdYkWN17qlqjSHWfSG" \
+                       "zRwxzaY%3DDZte5Xdq1mXJkHOsAWyXSBcMiDssP5q8hUZvve7evDXHOIDmFa"
 google_key = "AIzaSyCjEEmgflTyKDb8Czyh12P4fICziH_67bY"
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def read_root():
     """
     Return content of root html file
     """
-    return render_template("index.html")
+    if request.method == "GET":
+        return render_template("index.html")
 
+    elif request.method == "POST":
+        username = request.form.get('username').strip("@")
 
-@app.route("/friends_map")
-def read_item():
-    """
-    Return content of html map with user's friends on it
-    """
-    username = request.args.get('username')
+        if username == "":
+            return "Error! Enter username!"
 
-    if username == "":
-        return "Error! Enter username!"
+        mp = generate_map(username)
 
-    mp = generate_map(username)
+        if mp == "error":
+            return "Some error occurred! Maybe, you have entered incorrect username!"
 
-    if mp == "error":
-        return "Some error occurred! Maybe, you have entered incorrect username!"
-
-    return mp._repr_html_()
+        return mp._repr_html_()
 
 
 def generate_map(username: str) -> Union[str, folium.Map]:
